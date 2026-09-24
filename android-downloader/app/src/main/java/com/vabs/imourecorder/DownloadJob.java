@@ -37,7 +37,7 @@ final class DownloadJob {
         tlsEnable = json.optBoolean("tlsEnable", false);
         expectedBytes = Math.max(0, json.optLong("expectedBytes", 0));
         outputName = required(json, "outputName");
-        if (!outputName.matches("[0-9]{4}-[0-9]{4}\\.mp4")) {
+        if (!outputName.matches("(?:[0-9]{4}-[0-9]{4}|[0-9]{6}-[0-9]{6}-[0-9]{4})\\.mp4")) {
             throw new JSONException("Unsafe output filename");
         }
     }

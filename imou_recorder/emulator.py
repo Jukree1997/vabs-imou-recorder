@@ -19,7 +19,9 @@ from .config import ConfigurationError, ImouConfig
 PACKAGE = "com.vabs.imourecorder"
 ACTIVITY = f"{PACKAGE}/.MainActivity"
 REMOTE_ROOT = "files"
-_SAFE_OUTPUT = re.compile(r"^[0-9]{4}-[0-9]{4}\.mp4$")
+_SAFE_OUTPUT = re.compile(
+    r"^(?:[0-9]{4}-[0-9]{4}|[0-9]{6}-[0-9]{6}-[0-9]{4})\.mp4$"
+)
 
 
 class EmulatorError(RuntimeError):
@@ -156,7 +158,11 @@ def _require_one_device(adb: Path) -> None:
         )
 
 
-def _validate_mp4(path: Path) -> float:
+def validate_mp4(
+    path: Path,
+    *,
+    expected_duration_seconds: float | None = None,
+) -> float:
     ffprobe = shutil.which("ffprobe")
     if not ffprobe:
         raise EmulatorError("ffprobe is required to validate the downloaded MP4")
@@ -178,6 +184,15 @@ def _validate_mp4(path: Path) -> float:
         raise EmulatorError("ffprobe found no valid MP4 duration") from exc
     if duration <= 0:
         raise EmulatorError("Downloaded MP4 duration is not positive")
+    if (
+        expected_duration_seconds is not None
+        and expected_duration_seconds > 0
+        and duration < expected_duration_seconds * 0.8
+    ):
+        raise EmulatorError(
+            f"Downloaded MP4 is truncated ({duration:.1f}s; expected about "
+            f"{expected_duration_seconds:.1f}s)"
+        )
     return duration
 
 
@@ -250,7 +265,17 @@ def run_prepared_job(
 
     local_pull = pull_root / output_name
     _pull_app_file(adb, remote_output, local_pull)
-    duration = _validate_mp4(local_pull)
+    expected_duration = (
+        int(job.get("endTimeMillis") or 0) - int(job.get("beginTimeMillis") or 0)
+    ) / 1000
+    try:
+        duration = validate_mp4(
+            local_pull,
+            expected_duration_seconds=expected_duration,
+        )
+    except EmulatorError:
+        local_pull.unlink(missing_ok=True)
+        raise
     destination.parent.mkdir(parents=True, exist_ok=True)
     os.replace(local_pull, destination)
 

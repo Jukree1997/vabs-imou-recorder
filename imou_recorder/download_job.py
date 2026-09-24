@@ -112,6 +112,7 @@ def build_android_download_job(
     record: dict[str, Any],
     devices: list[dict[str, Any]],
     details: list[dict[str, Any]],
+    download_speed: int = 2,
 ) -> AndroidDownloadJob:
     """Build one job without exposing sensitive values in terminal output."""
 
@@ -180,7 +181,7 @@ def build_android_download_job(
             "beginTimeMillis": int(begin.timestamp() * 1000),
             "endTimeMillis": int(end.timestamp() * 1000),
             "recordType": 1,
-            "speed": 2,
+            "speed": download_speed,
             "productId": product_id,
             "tlsEnable": tls_enable,
             "expectedBytes": max(expected_bytes, 0),

@@ -9,7 +9,7 @@ cameras. Its goal is to discover recordings stored on a camera SD card through
 the official IMOU Open Platform, download each recording as MP4, and organize
 the result for the VABS video-processing pipeline.
 
-> Status: working one-clip prototype. Device discovery, SD-card metadata
+> Status: working resumable batch prototype. Device discovery, SD-card metadata
 > queries, Android-emulator download, ADB transfer, and `ffprobe` validation
 > have completed successfully; there is no downloadable APK release yet.
 
@@ -62,9 +62,10 @@ Use `.env.example` only as a field reference. Real values belong in a local
 
 The read-only OpenAPI milestone obtains an access token, lists devices available
 through the linked Imou Life account, checks SD-card playback capabilities, and
-lists one day of recording metadata. The one-clip milestone now downloads and
+lists one day of recording metadata. The one-clip milestone downloads and
 validates a short recording through the project-local Android emulator
-companion. The next milestone is resumable incremental batch ingestion.
+companion. Time-range batches now skip files that already pass `ffprobe`, making
+an interrupted command safe to rerun.
 
 ### Run the first read-only probe
 
@@ -110,6 +111,21 @@ Current IMOU documentation specifies `hmac-sha256` request signing. Some older
 endpoint examples still contain legacy MD5 signatures; set
 `IMOU_SIGNING_ALGORITHM=md5` only if the assigned data-center endpoint
 explicitly rejects the current format.
+
+### Download a time range
+
+With the emulator running and the companion APK installed, preview a local-time
+range first:
+
+```bash
+python3 -m imou_recorder.batch --date 2026-09-23 --start 08:00 --end 20:00 --dry-run
+```
+
+Remove `--dry-run` to download it. Source clips overlapping the half-open range
+are included, so a boundary clip can contain a few seconds outside the requested
+times. The clips are validated in private staging, then losslessly merged into
+one downstream-compatible range file such as `0800-2000.mp4`. Rerunning the same
+command validates and skips completed MP4 files.
 
 ## Distribution
 

@@ -51,6 +51,7 @@ class DownloadJobTests(unittest.TestCase):
             self.assertEqual(job.payload["schemaVersion"], 1)
             self.assertEqual(job.payload["channelId"], 0)
             self.assertEqual(job.payload["expectedBytes"], 1234)
+            self.assertEqual(job.payload["speed"], 2)
             self.assertEqual(job.payload["outputName"], "0000-0005.mp4")
             self.assertEqual(
                 job.destination,
