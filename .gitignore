@@ -1,0 +1,56 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+*secret*.json
+*credentials*.json
+
+# Camera/device data
+camera_registry.json
+device_registry.json
+downloads/
+recordings/
+staging/
+Videos/
+*.mp4
+*.mkv
+*.mkv.part
+*.dav
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Android / Gradle
+.gradle/
+local.properties
+**/build/
+captures/
+*.apk
+*.aab
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local architecture indexing
+graphify-out/
+
+# Workspace Git metadata fallback (the managed environment reserves .git)
+.gitdata/
