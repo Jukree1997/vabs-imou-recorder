@@ -13,6 +13,7 @@
 # Camera/device data
 camera_registry.json
 device_registry.json
+.state/
 downloads/
 recordings/
 staging/

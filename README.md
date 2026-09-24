@@ -64,6 +64,39 @@ lists devices available through the linked IMOU account, checks SD-card
 playback capabilities, and lists one day of recording metadata. Video download
 will be added only after that capability check succeeds.
 
+### Run the first read-only probe
+
+Create a private `.env` from `.env.example`, fill the IMOU App ID, App Secret,
+and account data-center hostname, then run:
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 -m imou_recorder.cli
+```
+
+The probe performs only read-only OpenAPI calls: `accessToken`,
+`deviceBaseList`, and `deviceBaseDetailList`. It does not bind, unbind,
+configure, or download from a camera. Access tokens are kept in memory, App
+Secrets are never printed, and device identifiers are masked in terminal
+output.
+
+After the basic probe succeeds, query one day of SD-card metadata without
+downloading video:
+
+```bash
+python3 -m imou_recorder.cli --records-date 2026-09-24
+```
+
+The metadata probe reads all pages for that date in batches of 30. It prints a
+short time-range summary and never prints the camera's internal SD-card
+filenames. The administrator token is cached at `.state/access_token.json`
+with owner-only permissions so scheduled checks reuse IMOU's three-day token.
+
+Current IMOU documentation specifies `hmac-sha256` request signing. Some older
+endpoint examples still contain legacy MD5 signatures; set
+`IMOU_SIGNING_ALGORITHM=md5` only if the assigned data-center endpoint
+explicitly rejects the current format.
+
 ## Distribution
 
 Android test builds and release notes will be published on the repository's
@@ -76,4 +109,3 @@ authorized to access. It is not affiliated with or endorsed by IMOU. IMOU and
 related product names are trademarks of their respective owners. Use of the
 IMOU Open Platform and OpenSDK is subject to IMOU's current terms and service
 charges.
-
