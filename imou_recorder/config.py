@@ -69,6 +69,11 @@ class ImouConfig:
     signing_algorithm: str = "hmac-sha256"
     timeout_seconds: float = 20.0
     camera_name: str | None = None
+    device_code: str | None = None
+    vabs_project: str | None = None
+    vabs_branch: str | None = None
+    video_root: Path | None = None
+    time_zone: str = "Asia/Bangkok"
 
     @classmethod
     def from_env_file(cls, path: str | Path = ".env") -> "ImouConfig":
@@ -78,6 +83,12 @@ class ImouConfig:
             "IMOU_APP_SECRET",
             "IMOU_API_HOST",
             "IMOU_SIGNING_ALGORITHM",
+            "IMOU_DEVICE_CODE",
+            "VABS_PROJECT",
+            "VABS_BRANCH",
+            "VABS_CAMERA_NAME",
+            "VABS_VIDEO_ROOT",
+            "VABS_TIME_ZONE",
         ):
             if key in os.environ:
                 values[key] = os.environ[key]
@@ -96,10 +107,17 @@ class ImouConfig:
                 "IMOU_SIGNING_ALGORITHM must be hmac-sha256 or md5"
             )
 
+        video_root_text = values.get("VABS_VIDEO_ROOT", "").strip()
         return cls(
             app_id=_required(values, "IMOU_APP_ID"),
             app_secret=_required(values, "IMOU_APP_SECRET"),
             api_host=host,
             signing_algorithm=algorithm,
             camera_name=values.get("VABS_CAMERA_NAME", "").strip() or None,
+            device_code=values.get("IMOU_DEVICE_CODE", "").strip() or None,
+            vabs_project=values.get("VABS_PROJECT", "").strip() or None,
+            vabs_branch=values.get("VABS_BRANCH", "").strip() or None,
+            video_root=Path(video_root_text).expanduser() if video_root_text else None,
+            time_zone=values.get("VABS_TIME_ZONE", "Asia/Bangkok").strip()
+            or "Asia/Bangkok",
         )

@@ -9,6 +9,7 @@ from typing import Any
 
 from .client import ImouApiError, ImouClient
 from .config import ConfigurationError, ImouConfig
+from .download_job import build_android_download_job
 from .token_cache import TokenCache, TokenCacheError
 
 
@@ -97,10 +98,29 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path(".env"),
         help="Configuration file path (default: .env)",
     )
-    parser.add_argument(
+    record_actions = parser.add_mutually_exclusive_group()
+    record_actions.add_argument(
         "--records-date",
         type=parse_date,
         help="Also query all SD-card clip metadata for YYYY-MM-DD",
+    )
+    record_actions.add_argument(
+        "--prepare-android-job",
+        metavar="YYYY-MM-DD",
+        type=parse_date,
+        help="Create a private one-clip job for the Android emulator companion",
+    )
+    parser.add_argument(
+        "--clip-index",
+        type=int,
+        default=0,
+        help="Zero-based chronological clip selected for the Android job (default: 0)",
+    )
+    parser.add_argument(
+        "--job-file",
+        type=Path,
+        default=Path(".state/android-job.json"),
+        help="Private Android job path (default: .state/android-job.json)",
     )
     parser.add_argument(
         "--token-cache",
@@ -169,35 +189,63 @@ def main(argv: list[str] | None = None) -> int:
             )
             print(f"Capabilities {mask_identifier(entry.get('deviceId'))}: {summary}")
 
-        if args.records_date:
+        records_date = args.records_date or args.prepare_android_job
+        if records_date:
             device_id, channel_id = select_target_channel(devices, config.camera_name)
             records = client.query_all_local_records(
                 token.value,
                 device_id,
                 channel_id,
-                args.records_date,
+                records_date,
             )
+            records.sort(key=lambda record: str(record.get("beginTime") or ""))
             total_bytes = sum(
                 int(record.get("fileLength") or 0)
                 for record in records
                 if str(record.get("fileLength") or "0").isdigit()
             )
             print(
-                f"Local records on {args.records_date}: {len(records)} "
+                f"Local records on {records_date}: {len(records)} "
                 f"({total_bytes / (1024 * 1024):.1f} MiB recorded-file total)"
             )
-            preview = records[:3]
-            if len(records) > 6:
-                preview += records[-3:]
-            elif len(records) > 3:
-                preview += records[3:]
-            for index, record in enumerate(preview):
-                if len(records) > 6 and index == 3:
-                    print(f"  ... {len(records) - 6} additional clips ...")
-                print(
-                    f"- {record.get('beginTime', '?')} to {record.get('endTime', '?')} "
-                    f"({record.get('type', 'unknown')})"
+            if args.prepare_android_job:
+                if not records:
+                    raise ImouApiError("No SD-card recordings were found for that date")
+                if args.clip_index < 0 or args.clip_index >= len(records):
+                    raise ConfigurationError(
+                        f"--clip-index must be between 0 and {len(records) - 1}"
+                    )
+                record = records[args.clip_index]
+                job = build_android_download_job(
+                    config,
+                    access_token=token.value,
+                    device_id=device_id,
+                    channel_id=channel_id,
+                    record=record,
+                    devices=devices,
+                    details=abilities,
                 )
+                job.write_private(args.job_file)
+                print(
+                    "Prepared one private Android job for "
+                    f"{record.get('beginTime', '?')} to {record.get('endTime', '?')}."
+                )
+                print(f"Job file: {args.job_file} (owner-only; contains temporary secrets)")
+                print(f"Final destination after validation: {job.destination}")
+            else:
+                preview = records[:3]
+                if len(records) > 6:
+                    preview += records[-3:]
+                elif len(records) > 3:
+                    preview += records[3:]
+                for index, record in enumerate(preview):
+                    if len(records) > 6 and index == 3:
+                        print(f"  ... {len(records) - 6} additional clips ...")
+                    print(
+                        f"- {record.get('beginTime', '?')} to "
+                        f"{record.get('endTime', '?')} "
+                        f"({record.get('type', 'unknown')})"
+                    )
         return 0
     except ConfigurationError as exc:
         print(f"Configuration error: {exc}")

@@ -1,0 +1,39 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.vabs.imourecorder"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.vabs.imourecorder"
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName "0.1.0"
+
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt")
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+}
+
+dependencies {
+    implementation files("libs/LCOpenSDK.aar")
+    implementation "com.google.code.gson:gson:2.11.0"
+    implementation "androidx.annotation:annotation:1.9.1"
+    implementation "androidx.core:core:1.15.0"
+}

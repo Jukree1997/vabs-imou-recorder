@@ -9,13 +9,15 @@ caches the administrator access token, discovers devices made available to the
 developer account, queries local recording metadata one calendar day at a
 time, and records download state in a local database.
 
-### Android download companion
+### Android emulator download companion
 
 The Android component receives short-lived authorization and recording jobs
-from the backend. It uses the official IMOU OpenSDK download interface to write
-MP4 files and reports progress and completion. Long-running work should use an
-Android foreground service so the operating system does not suspend an active
-transfer.
+from the backend. During the initial proof it runs locally in a KVM-accelerated
+Android 11 emulator, uses the official IMOU OpenSDK download interface to write
+an MP4, and reports completion through app-specific storage. The Linux bridge
+pulls the result with ADB and validates it before publication. Long-running
+production work should use an Android foreground service so the operating
+system does not suspend an active transfer.
 
 The App Secret must never be embedded in the APK.
 
@@ -54,4 +56,3 @@ to be contiguous.
 | Camera security code | Secret store only | Runtime only | No |
 | Recording metadata | Yes | Job subset | No |
 | Recorded MP4 | Configured storage | Temporary | No |
-

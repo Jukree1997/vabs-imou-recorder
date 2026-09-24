@@ -18,11 +18,19 @@ class ImouConfigTests(unittest.TestCase):
             "IMOU_APP_ID=test-id\n"
             "IMOU_APP_SECRET='test-secret'\n"
             "IMOU_API_HOST=openapi-sg.easy4ip.com\n"
+            "IMOU_DEVICE_CODE=device-code\n"
+            "VABS_PROJECT=VABS\n"
+            "VABS_BRANCH=BKS\n"
+            "VABS_CAMERA_NAME=BKS_IMOU_01\n"
+            "VABS_VIDEO_ROOT=/tmp/videos\n"
         )
         config = ImouConfig.from_env_file(path)
         self.assertEqual(config.app_id, "test-id")
         self.assertEqual(config.app_secret, "test-secret")
         self.assertEqual(config.signing_algorithm, "hmac-sha256")
+        self.assertEqual(config.device_code, "device-code")
+        self.assertEqual(config.vabs_project, "VABS")
+        self.assertEqual(config.video_root, Path("/tmp/videos"))
 
     def test_rejects_non_imou_host(self) -> None:
         path = self._write_env(

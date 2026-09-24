@@ -42,6 +42,9 @@ local.properties
 captures/
 *.apk
 *.aab
+android-downloader/app/libs/*.aar
+.tools/
+.android/
 
 # Editors and operating systems
 .idea/

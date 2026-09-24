@@ -9,8 +9,9 @@ cameras. Its goal is to discover recordings stored on a camera SD card through
 the official IMOU Open Platform, download each recording as MP4, and organize
 the result for the VABS video-processing pipeline.
 
-> Status: early integration prototype. There is no downloadable APK release
-> yet.
+> Status: working one-clip prototype. Device discovery, SD-card metadata
+> queries, Android-emulator download, ADB transfer, and `ffprobe` validation
+> have completed successfully; there is no downloadable APK release yet.
 
 ## Planned workflow
 
@@ -19,7 +20,7 @@ Authorized IMOU camera SD card
             |
             | IMOU OpenAPI + Android OpenSDK
             v
-Android download companion
+Local Android emulator companion
             |
             | authenticated upload/sync
             v
@@ -59,10 +60,11 @@ Use `.env.example` only as a field reference. Real values belong in a local
 
 ## Development status
 
-The first milestone is a read-only OpenAPI probe that obtains an access token,
-lists devices available through the linked IMOU account, checks SD-card
-playback capabilities, and lists one day of recording metadata. Video download
-will be added only after that capability check succeeds.
+The read-only OpenAPI milestone obtains an access token, lists devices available
+through the linked Imou Life account, checks SD-card playback capabilities, and
+lists one day of recording metadata. The one-clip milestone now downloads and
+validates a short recording through the project-local Android emulator
+companion. The next milestone is resumable incremental batch ingestion.
 
 ### Run the first read-only probe
 
@@ -91,6 +93,18 @@ The metadata probe reads all pages for that date in batches of 30. It prints a
 short time-range summary and never prints the camera's internal SD-card
 filenames. The administrator token is cached at `.state/access_token.json`
 with owner-only permissions so scheduled checks reuse IMOU's three-day token.
+
+### Run the one-clip emulator proof
+
+No spare Android phone is required. The Linux machine has KVM support, and the
+companion uses an Android 11 Google APIs emulator image capable of running the
+ARM native libraries shipped in IMOU's SDK. Follow the one-time setup and
+one-clip procedure in [android-downloader/README.md](android-downloader/README.md).
+
+Keep `IMOU_DEVICE_CODE` only in the private `.env`; this is the security code
+printed on the camera label, not the Imou Life account password. The first
+proof intentionally selects a single clip, validates it with `ffprobe`, and
+only then publishes it into the configured VABS video directory.
 
 Current IMOU documentation specifies `hmac-sha256` request signing. Some older
 endpoint examples still contain legacy MD5 signatures; set
